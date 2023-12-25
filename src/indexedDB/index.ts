@@ -86,7 +86,7 @@ export const addStoreData = <T>(
 			resolve();
 		};
 
-		_addRequest.onerror = () => {
+		_addRequest.onerror = (e: Event) => {
 			console.error("[IndexedDB]: addStoreData()...", e);
 			reject(e);
 		};
@@ -111,13 +111,13 @@ export const getStoreDataById = <T>(
 		const _store = db.transaction(storeName, "readonly").objectStore(storeName);
 		const _getRequest = _store.get(targetId);
 
-		_getRequest.onsuccess = () => {
+		_getRequest.onsuccess = (e: Event) => {
 			const data = e.target as IDBRequest;
 			const result = data!.result;
 			resolve(result);
 		};
 
-		_getRequest.onerror = () => {
+		_getRequest.onerror = (e: Event) => {
 			console.error("[IndexedDB]: getStoreDataById()...", e);
 			reject(e);
 		};
@@ -224,7 +224,6 @@ export const updateData = (
 				const putRequest = objectStore.put(_data);
 
 				putRequest.onsuccess = () => {
-					console.log("Data updated successfully");
 					resolve(true);
 				};
 
