@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { extensions } from "../dummy/extension";
 import Checkbox from "./Checkbox";
 
@@ -6,7 +6,11 @@ import Checkbox from "./Checkbox";
  * 파일 확장자를 관리할 Form 컴포넌트
  * @returns {JSX.Element} Form 컴포넌트
  */
-export default function Form(): JSX.Element {
+export default function Form({
+	isReadyIndexedDB,
+}: {
+	isReadyIndexedDB: boolean;
+}): JSX.Element {
 	const [customValue, setCustomValue] = useState("");
 
 	/**
@@ -22,6 +26,11 @@ export default function Form(): JSX.Element {
 	 * 커스텀 확장자를 등록하는 함수
 	 */
 	const addCustomExtension = () => {};
+
+	useEffect(() => {
+		if (!isReadyIndexedDB) return;
+		console.log("get!!");
+	}, [isReadyIndexedDB]);
 	return (
 		<section className="bg-stone-50 rounded-xl px-4 py-1 mt-4">
 			<h2 className="text-lg font-bold text-zinc-700 my-2">고정 확장자</h2>
