@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { extensions } from "../dummy/extension";
 import Checkbox from "./Checkbox";
+import { getDataByProperty, updateData } from "../indexedDB";
 
 /**
  * 파일 확장자를 관리할 Form 컴포넌트
@@ -12,6 +13,7 @@ export default function Form({
 	isReadyIndexedDB: boolean;
 }): JSX.Element {
 	const [customValue, setCustomValue] = useState("");
+	const [defaultDataSet, setDefaultDataSet] = useState(extensions);
 
 	/**
 	 * 커스텀 확장자의 입력처리를 관리하는 함수
@@ -27,16 +29,51 @@ export default function Form({
 	 */
 	const addCustomExtension = () => {};
 
+	const getCurrentExtensionData = async () => {
+		try {
+			const data = (await getDataByProperty(
+				"format",
+				"category",
+				"D"
+			)) as ExtensionDataSet;
+			setDefaultDataSet(data);
+		} catch (e) {
+			console.error(e);
+		}
+	};
+
+	const onChangeCheckboxValue = async (
+		e: React.ChangeEvent<HTMLInputElement>,
+		id: string
+	) => {
+		try {
+			await updateData("format", id, {
+				isChecked: e.target.checked,
+			});
+
+			getCurrentExtensionData();
+		} catch (e) {
+			console.error(e);
+		}
+	};
+
 	useEffect(() => {
 		if (!isReadyIndexedDB) return;
-		console.log("get!!");
+		getCurrentExtensionData();
 	}, [isReadyIndexedDB]);
+
 	return (
 		<section className="bg-stone-50 rounded-xl px-4 py-1 mt-4">
 			<h2 className="text-lg font-bold text-zinc-700 my-2">고정 확장자</h2>
 			<article className="w-full flex mb-6">
-				{extensions?.map((extension) => (
-					<Checkbox key={extension} name="extension" title={extension} />
+				{defaultDataSet?.map(({ id, name, isChecked }) => (
+					<Checkbox
+						key={id}
+						name="extension"
+						title={name}
+						isChecked={isChecked}
+						onChange={(e) => onChangeCheckboxValue(e, id)}
+					/>
 				))}
 			</article>
 			<h2 className="text-lg font-bold text-zinc-700 my-2">고정 확장자</h2>
