@@ -3,10 +3,12 @@ import { extensions } from "../dummy/extension";
 import Checkbox from "./Checkbox";
 import {
 	addStoreData,
+	deleteStoreData,
 	getDataByProperty,
 	getStoreDataById,
 	updateData,
 } from "../indexedDB";
+import Tag from "./Tag";
 
 /** 고정 확장자 및 커스텀 확장자 데이터 셋 타입 */
 type DataSet = {
@@ -38,6 +40,11 @@ export default function Form({
 		setCustomValue(value);
 	};
 
+	/**
+	 * 이미 존재하는지 파일 여부를 확인하는 함수
+	 * @param value
+	 * @returns
+	 */
 	const isExistName = async (value: string) => {
 		try {
 			const data = await getStoreDataById("format", value);
@@ -50,8 +57,17 @@ export default function Form({
 
 	/**
 	 * 커스텀 확장자를 등록하는 함수
+	 * 등록 가능 조건에 따른 처리
+	 * 1) 최대 등록 횟수 200회 미만
+	 * 2) 확장자는 영문 소문자만 등록
+	 * 3) 이미 존재하는 확장자인지 여부 판단
 	 */
 	const addCustomExtension = async () => {
+		if (dataSet.custom.length === 200) {
+			alert("최대 추가 횟수를 초과하였습니다.");
+			return;
+		}
+
 		if (!/^[a-z]+$/.test(customValue)) {
 			alert("영문 소문자만 가능합니다.");
 			return;
@@ -122,6 +138,14 @@ export default function Form({
 		}
 	};
 
+	/**
+	 * 커스텀 확장자를 삭제하는 함수
+	 */
+	const deleteCustomExtension = (id: string) => {
+		deleteStoreData("format", id);
+		getDataSet();
+	};
+
 	/** indexedDB가 준비되면 데이터를 호출 */
 	useEffect(() => {
 		if (!isReadyIndexedDB) return;
@@ -142,7 +166,7 @@ export default function Form({
 					/>
 				))}
 			</article>
-			<h2 className="text-lg font-bold text-zinc-700 my-2">고정 확장자</h2>
+			<h2 className="text-lg font-bold text-zinc-700 my-2">커스텀 확장자</h2>
 			<article>
 				<input
 					type="text"
@@ -150,15 +174,26 @@ export default function Form({
 					onChange={onChangeCustomValue}
 					placeholder="확장자 입력"
 					maxLength={20}
-					className="w-full max-w-[320px] border-solid border-2 rounded-xl mr-2 pl-2"
+					className="w-full max-w-[320px] border-solid border rounded-lg mr-1 pl-2 py-1"
 				/>
-				<button onClick={addCustomExtension}>추가</button>
+				<button
+					onClick={addCustomExtension}
+					className="w-[64px] h-[32px] bg-blue-500 rounded-lg text-white text-md"
+				>
+					추가
+				</button>
 			</article>
-			<article>
-				<label> {dataSet.custom.length}/200</label>
-				<div>
-					{dataSet.custom.map((extension) => (
-						<div key={extension.id}>{extension.name}</div>
+			<article className="mt-3">
+				<label className="text-sm text-zinc-400 ml-2">
+					{dataSet.custom.length}/200
+				</label>
+				<div className="w-full max-w-[600px]">
+					{dataSet.custom.map(({ id, name }) => (
+						<Tag
+							key={id}
+							name={name}
+							onDelete={() => deleteCustomExtension(id)}
+						/>
 					))}
 				</div>
 			</article>

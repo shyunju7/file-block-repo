@@ -238,3 +238,35 @@ export const updateData = (
 		};
 	});
 };
+
+/**
+ * IndexedDB 특정 store에 데이터를 추가하는 함수
+ * @param {string} storeName
+ * @param {string} targetId
+ * @returns void
+ */
+export const deleteStoreData = (
+	storeName: string,
+	targetId: string
+): Promise<void> => {
+	if (!isValidStoreName(storeName)) {
+		return Promise.reject("Invalid store name");
+	}
+
+	return new Promise((resolve, reject) => {
+		const _store = db
+			.transaction(storeName, "readwrite")
+			.objectStore(storeName);
+
+		const _addRequest = _store.delete(targetId);
+
+		_addRequest.onsuccess = () => {
+			resolve();
+		};
+
+		_addRequest.onerror = (e: Event) => {
+			console.error("[IndexedDB]: deleteStoreData()...", e);
+			reject(e);
+		};
+	});
+};
