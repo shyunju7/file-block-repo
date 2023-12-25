@@ -96,12 +96,12 @@ export const addStoreData = <T>(
 /**
  * IndexedDB에 저장된 Store의 데이터 1건에 대해 조회하는 함수
  * @param {string} storeName 탐색한 스토어 이름
- * @param {numbeR} targetId 타겟 식별자
+ * @param {string} targetId 타겟 식별자
  * @returns {T} 결과 데이터
  */
 export const getStoreDataById = <T>(
 	storeName: string,
-	targetId: number
+	targetId: string
 ): Promise<T> => {
 	if (!isValidStoreName(storeName)) {
 		return Promise.reject("Invalid store name");
