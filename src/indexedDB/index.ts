@@ -15,10 +15,7 @@ export const Stores = {
  */
 const getDefaultData = (_store: IDBObjectStore) => {
 	for (const extension of extensions) {
-		_store.add({
-			name: extension,
-			status: false,
-		});
+		_store.add(extension);
 	}
 };
 
@@ -36,9 +33,8 @@ export const initDB = (): Promise<boolean> => {
 			if (!db.objectStoreNames.contains(Stores.FORMAT)) {
 				const _store = db.createObjectStore(Stores.FORMAT, {
 					keyPath: "id",
-					autoIncrement: true,
 				});
-				_store.createIndex("status", "status", { unique: false });
+				_store.createIndex("category", "category", { unique: false });
 				getDefaultData(_store);
 			}
 		};
@@ -86,15 +82,14 @@ export const addStoreData = <T>(
 
 		const _addRequest = _store.add(requestObject);
 
-		_addRequest.addEventListener("success", () => {
-			console.log("[IndexedDB]: addStoreData()...");
+		_addRequest.onsuccess = () => {
 			resolve();
-		});
+		};
 
-		_addRequest.addEventListener("error", (e) => {
+		_addRequest.onerror = () => {
 			console.error("[IndexedDB]: addStoreData()...", e);
 			reject(e);
-		});
+		};
 	});
 };
 
@@ -116,17 +111,16 @@ export const getStoreDataById = <T>(
 		const _store = db.transaction(storeName, "readonly").objectStore(storeName);
 		const _getRequest = _store.get(targetId);
 
-		_getRequest.addEventListener("success", (e: Event) => {
-			console.log("[IndexedDB]: getStoreDataById()...");
+		_getRequest.onsuccess = () => {
 			const data = e.target as IDBRequest;
 			const result = data!.result;
 			resolve(result);
-		});
+		};
 
-		_getRequest.addEventListener("error", (e) => {
+		_getRequest.onerror = () => {
 			console.error("[IndexedDB]: getStoreDataById()...", e);
 			reject(e);
-		});
+		};
 	});
 };
 
@@ -140,7 +134,7 @@ export const getStoreDataById = <T>(
 export const getDataByProperty = <T>(
 	storeName: string,
 	propertyName: string,
-	target: string
+	target: string | boolean
 ): Promise<T[]> => {
 	if (!isValidStoreName(storeName)) {
 		return Promise.reject("Invalid store name");
@@ -157,7 +151,7 @@ export const getDataByProperty = <T>(
 		const _responseData: T[] = [];
 		const _requestCursor = _index.openCursor();
 
-		_requestCursor.addEventListener("success", (e: Event) => {
+		_requestCursor.onsuccess = (e: Event) => {
 			const data = e.target as IDBRequest;
 			const _cursor = data.result;
 
@@ -170,11 +164,78 @@ export const getDataByProperty = <T>(
 				resolve(_responseData);
 			}
 			console.log(`[IndexedDB]: getStoreDataBy${propertyName}()...`);
-		});
+		};
 
-		_requestCursor.addEventListener("error", (e) => {
+		_requestCursor.onerror = (e: Event) => {
 			console.log(`[IndexedDB]: getStoreDataBy${propertyName}()...`);
 			reject(e);
-		});
+		};
+	});
+};
+
+/**
+ * IndexedDB에 저장된 Store의 데이터 여러건에 대해 조회하는 함수
+ * @param {string} storeName 탐색한 스토어 이름
+ * @returns {T} 결과 데이터
+ */
+export const getAllStoreData = <T>(storeName: string): Promise<T> => {
+	if (!isValidStoreName(storeName)) {
+		return Promise.reject("Invalid store name");
+	}
+
+	return new Promise((resolve, reject) => {
+		const _store = db.transaction(storeName, "readonly").objectStore(storeName);
+		const _getRequest = _store.getAll();
+
+		_getRequest.onsuccess = (e: Event) => {
+			console.log("[IndexedDB]: getAllStoreData()...");
+			const data = e.target as IDBRequest;
+			const result = data!.result;
+			resolve(result);
+		};
+
+		_getRequest.onerror = (e: Event) => {
+			console.error("[IndexedDB]: getAllStoreData()...", e);
+			reject(e);
+		};
+	});
+};
+
+export const updateData = (
+	storeId: string,
+	dataId: string,
+	newData: { [key: string]: string | boolean }
+): Promise<boolean> => {
+	return new Promise((resolve, reject) => {
+		const transaction = db.transaction(storeId, "readwrite");
+		const objectStore = transaction.objectStore(storeId);
+
+		const _getRequest = objectStore.get(dataId);
+
+		_getRequest.onsuccess = (e: Event) => {
+			const _request = e.target as IDBOpenDBRequest;
+			let _data = _request.result;
+			if (_data) {
+				_data = {
+					..._data,
+					...newData,
+				};
+
+				const putRequest = objectStore.put(_data);
+
+				putRequest.onsuccess = () => {
+					console.log("Data updated successfully");
+					resolve(true);
+				};
+
+				putRequest.onerror = (e) => {
+					console.error("Error updating data", e);
+					reject(false);
+				};
+			} else {
+				console.error("Data not found");
+				reject(false);
+			}
+		};
 	});
 };
