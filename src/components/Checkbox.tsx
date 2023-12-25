@@ -11,9 +11,11 @@ interface CheckboxProps {
  */
 export default function Checkbox({ name, title }: CheckboxProps): JSX.Element {
 	return (
-		<div className="flex w-full bg-red-300 gap-2">
+		<div className="flex w-full gap-2">
 			<input type="checkbox" id={`extension-${title}`} name={name} />
-			<label htmlFor={`extension-${title}`}>{title}</label>
+			<label htmlFor={`extension-${title}`} className="text-zinc-700">
+				{title}
+			</label>
 		</div>
 	);
 }
